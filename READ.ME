@@ -1,0 +1,39 @@
+Resources:
+* YouTube Link: https://www.youtube.com/watch?v=3gZickVbFfw
+* Github - https://github.com/trentpark8800/air-...
+* Open AQ (data) - https://openaq.org
+
+1. Create Python environment
+    a. Check python version - 3.11.7
+    b. python -m venv .venv 
+        - This will create the virtual environment. Note, you can name the virtual environment anything you want
+    c. source .venv/bin/activate (will activate virtual environment)
+2. Install Necessary Packages
+    a. pip install openaq
+    b. pip install jupyter
+3. Include Standard .gitignore boiler plate (see .gitignore)
+4. Create Requirements File
+    a. pip freeze > requirements.txt
+        - This will create a requirements text file that will list all the requirements and their exact version needed in this .venv
+    b. pip install -r reequirements.txt
+        - This will allow someone wanting to following this project to install all the dependencies down to the exact versions used
+5. Create a Folder called notebooks for the Jupyter Notebooks
+    a. When you create a Jupyter Notebook, make sure you select the version your running in you .venv       
+        - Select Kernel 
+            - Note: I had to download suggested extensions
+        - Then you'll be given a choice for Python environement. The .venv environement was the first choice. I selected that one
+6. Install DuckDB - This is similar to SQLite
+    a. pip install pandas (we'll need this with our data)
+    b. pip install duckdb
+        - Note: had to do some troubleshooting because pip module could not be found. I deleted the .venv file and recreated and recreated the requirements.txt file
+            * rm -rf .venv
+            * python3 -m venv .venv
+            * source .venv/bin/activate
+            * python3 -m pip install --upgrade pip
+7. Install Plotly Dash
+    a. pip install plotly 
+    b. pip install dash
+
+
+
+
