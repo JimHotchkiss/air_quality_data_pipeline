@@ -36,3 +36,6 @@ CREATE OR REPLACE VIEW presentation.air_quality_data AS (
 	FROM ranked_data
 	WHERE rn = 1
 );
+
+SELECT location_id, sensors_id, location, datetime, lat, lon, parameter, units, value, month, year, ingestion_datetime
+FROM air_quality.raw.air_quality_data;

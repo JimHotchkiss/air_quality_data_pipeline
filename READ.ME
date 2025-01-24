@@ -34,6 +34,23 @@ Resources:
     a. pip install plotly 
     b. pip install dash
 
+CLI commands - 
+Destroy - python database_manager.py --destroy --database-path ../air_quality.db
+Create - python database_manager.py --create --database-path ../air_quality.db --ddl-query-parent-dir ../sql/ddl
+
+Destroy and Recreate database and views
+1. python database_manager.py --destroy --database-path ../air_quality.db
+2. python database_manager.py --create --database-path ../air_quality.db --ddl-query-parent-dir ../sql/ddl
+3. notebooks    
+    a. Run cells in api-exploration.ipynb
+    b. Run cells in s3-exploration.ipynb - Note: This loads the raw data from AWS 
+    c. Run cells in data-quality-check.ipynd
+4. Connect to DBeaver 
+    a. Run airquality_view.sql SQL query in dbduck_sql_query
+    b. Run daily_air_quality_stats.sql 
+    c. Run latest_param_view.sql
+5. cd into dashboard
+    a. python app.py - Note: to run dashboard
 
 
 
