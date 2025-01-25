@@ -29,7 +29,9 @@ def collect_query_paths(parent_dir: str) -> List[str]:
     sql_files = []
 
     # os.walk() finds a parent directory and 'walk' through it
+    # Note: root, in this for loop, is the path
     for root, _, files in os.walk(parent_dir):
+            print(f"root: {root}")
             for file in files:
                 if file.endswith(".sql"):
                     file_path = os.path.join(root, file)
@@ -51,11 +53,13 @@ def execute_query(con: DuckDBPyConnection, query: str) -> None:
 
 def setup_database(database_path: str, ddl_query_parent_dir: str) -> None:
     
+    # ddl_query_parent_dir is the parent_dir argument which is parsed from the user's input
     query_paths = collect_query_paths(ddl_query_parent_dir)
 
     con = connect_to_database(database_path)
 
     for query_path in query_paths:
+        print(f"query path: {query_path}")
         query = read_query(query_path)
         execute_query(con, query)
         logging.info(f"Executed query from {query_path}")
@@ -74,16 +78,21 @@ def main():
 
     logging.getLogger().setLevel(logging.INFO)
     
+    # This instantiates an argparse argument parser object
     parser = argparse.ArgumentParser(description="CLI tool to setup or destroy a database")
 
+    # Using the mutually exclusive method, prevents certain commands running simultaneously. I defines a group of arguments where only one of them can be specified at a time
     group = parser.add_mutually_exclusive_group(required=True)
     
+    # create and destroy are added to the created group, and this ensures that these cannot be used together 
     group.add_argument("--create", action="store_true", help="Create the database")
     group.add_argument("--destroy", action="store_true", help="Destroy the database")
 
+    # We're adding two arguments to our parser: database-path and ddl-query-parent-dir. This will allow the user to specify the database path and the path to the directory of the queries they want to perform 
     parser.add_argument("--database-path", type=str, help="Path to the database")
     parser.add_argument("--ddl-query-parent-dir", type=str, help="Path to the parent directory of the ddl queries")
 
+    # This method parses the command-line arguments provided by the user when running the script. It checks the arguments against the rules you defined using parser.add_argument() and ensures they are valid (e.g., correct data type, mutually exclusive, required arguments, etc.). If the user's input doesn't match the expected format or rules, it raises an error and displays a helpful message.
     args = parser.parse_args()
 
     if args.create:
