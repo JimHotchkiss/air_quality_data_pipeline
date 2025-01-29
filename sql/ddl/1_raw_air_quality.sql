@@ -2,7 +2,7 @@
 
 -- Create our tables 
     -- Note: Per the video, Trend confused the name of the table. It is actually air_quality_data. He confused as air_quality
-CREATE TABLE IF NOT EXISTS raw.air_quality_data (
+CREATE TABLE IF NOT EXISTS raw.air_quality(
     location_id BIGINT,
     sensors_id BIGINT,
     "location" VARCHAR, 

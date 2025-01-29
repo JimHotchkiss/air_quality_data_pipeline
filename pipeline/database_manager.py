@@ -40,6 +40,7 @@ def collect_query_paths(parent_dir: str) -> List[str]:
     logging.info(f"Found {len(sql_files)} sql scripts at location {parent_dir}")
 
     # the sorted with will use the 0 and 1 prefixes to sort. 
+    print(f"SQL Files: {sql_files}")
     return sorted(sql_files)
 
 def read_query(path: str) -> str:
@@ -55,6 +56,8 @@ def setup_database(database_path: str, ddl_query_parent_dir: str) -> None:
     
     # ddl_query_parent_dir is the parent_dir argument which is parsed from the user's input
     query_paths = collect_query_paths(ddl_query_parent_dir)
+
+    print(f"Query Paths: {query_paths}")
 
     con = connect_to_database(database_path)
 
@@ -84,7 +87,7 @@ def main():
     # Using the mutually exclusive method, prevents certain commands running simultaneously. I defines a group of arguments where only one of them can be specified at a time
     group = parser.add_mutually_exclusive_group(required=True)
     
-    # create and destroy are added to the created group, and this ensures that these cannot be used together 
+    # create and destroy are added to the created group, and this ensures that these cannot be used together. Note - for action=, If the user provides the --create argument, for example, in the command line, the corresponding value in the args object will be set to True, and the --destroy command will be False. If the user does not provide the --setup argument, the value will default to False.
     group.add_argument("--create", action="store_true", help="Create the database")
     group.add_argument("--destroy", action="store_true", help="Destroy the database")
 

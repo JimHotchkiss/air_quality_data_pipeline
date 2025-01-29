@@ -1,10 +1,9 @@
-# Goal - Create a query of data file paths, and use those to insert data into our database
 import argparse
 import json 
 import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from typing import Dict, List
+from typing import List
 
 from duckdb import IOException
 from jinja2 import Template
@@ -16,18 +15,17 @@ from database_manager import (
     read_query
 )
 
-# Read the varios location ids from locations.json
+# Read various locations from locations.json, being passed the file_path to said locations.json, and it will return a list of location ids
 def read_location_ids(file_path: str) -> List[str]:
     with open(file_path, "r") as f:
         locations = json.load(f)
-       # f.close() - close() isn't necessary when using the 'with' statement
     
     location_ids = [str(id) for id in locations.keys()]
     return location_ids
 
 
-def compile_data_file_paths(
-        data_file_path_template: str, location_ids: List[str], start_date: str, end_date: str) -> List[str]:
+# Note: The reason we're not using asynchronous patterns is because DuckDb does not like congruent connections opened. 
+def compile_data_file_paths(data_file_path_template: str, location_ids: List[str], start_date: str, end_date: str) -> List[str]:
     
     start_date   = datetime.strptime(start_date, "%Y-%m")
     end_date   = datetime.strptime(end_date, "%Y-%m")
@@ -46,41 +44,93 @@ def compile_data_file_paths(
             data_file_paths.append(data_file_path)
             index_date += relativedelta(months=1)
     return data_file_paths
-def compile_data_file_query(
-        base_path: str, data_file_path: str, extract_query_template: str
-) -> str:
+
+def compile_data_file_query(base_path: str, data_file_path: str, extract_query_template: str) -> str:
     extract_query = Template(extract_query_template).render(
         data_file_path = f"{base_path}/{data_file_path}"
     )
     return extract_query
 
 def extract_data(args):
-    pass
+    location_ids = read_location_ids(args.locations_file_path)
+
+    data_file_path_template = "locationid={{location_id}}/year={{year}}/month={{month}}/*"
+
+    data_file_paths = compile_data_file_paths(
+        data_file_path_template=data_file_path_template,
+        location_ids=location_ids,
+        start_date=args.start_date,
+        end_date=args.end_date
+    )
+
+    extract_query_template = read_query(path=args.extract_query_template_path)
+
+    con = connect_to_database(path=args.database_path)
+
+    for data_file_path in data_file_paths:
+        print(data_file_path)
+        logging.info(f"Extracting data from {data_file_path}")
+        query = compile_data_file_query(
+            base_path=args.source_base_path,
+            data_file_path=data_file_path,
+            extract_query_template=extract_query_template
+        )
+
+        try:
+            execute_query(con, query)
+            logging.info(f"Extracted data from {data_file_path}")
+        except IOException as e:
+            # I think {data_file_path: {e}} was the issue
+            logging.warning(f"Could not find data from {data_file_path}: {e}")
+    close_database_connection(con)
+    
 
 # Test compile_data_file_paths() with dummy data
 def main():
-    location_ids = ["123", "456"]
-    # This creates the file path to the OpenAQ data 
-    data_file_path_template = "locationid={{ location_id}}/year={{year}}/month={{month}}"
+    logging.getLogger().setLevel(logging.INFO)
 
-    data_file_paths = compile_data_file_paths(
-        data_file_path_template, location_ids, "2024-10" , "2024-12"
+    parser = argparse.ArgumentParser(description="CLI for ELT Extraction")
+    parser.add_argument(
+        "--locations_file_path",
+        type=str,
+        required=True,
+        help="Path to the locations JSON file"
+    )
+    parser.add_argument(
+        "--start_date",
+        type=str,
+        required=True,
+        help="Start date in YYYY-MM format"
+    )
+    parser.add_argument(
+        "--end_date",
+        type=str,
+        required=True,
+        help="End date in YYYY-MM format"
+    )
+    parser.add_argument(
+        "--extract_query_template_path",
+        type=str,
+        required=True,
+        help="Path to the SQL extraction query template"
+    )
+    parser.add_argument(
+        "--database_path",
+        type=str,
+        required=True,
+        help="Path to database"
+    )
+    parser.add_argument(
+        "--source_base_path",
+        type=str,
+        required=True,
+        help="Base path for the remote data files"
     )
 
-    with open("../sql/dml/raw/0_raw_air_quality_insert.sql") as f:
-        query_template = f.read()
-    
-    for data_file_path in data_file_paths:
-        query = compile_data_file_query("s3://some_url_string", data_file_path, query_template)
-        print(query)
+    args = parser.parse_args()
+    extract_data(args)
 
-# Note: This is the kind of url we're trying to create to match OpenAQ's documentation: /records/csv.gz/locationid=2178/year=2022/month=05/location-2178-20220503.csv.gz
-
-# Note: This is the list of data file paths: ['locationid=123/year=2024/month=01', 'locationid=123/year=2024/month=02', 'locationid=123/year=2024/month=03', 'locationid=456/year=2024/month=01', 'locationid=456/year=2024/month=02', 'locationid=456/year=2024/month=03']
-
-# Note: The API's example shows the months with a leading 0, when not double digit
-
-
+# Example usage: python extraction.py --locations_file_path ../locations.json --start_date 2024-01 --end_date 2024-03 --database_path ../air_quality.db --extract_query_template_path ../sql/dml/raw/0_raw_air_quality_insert.sql --source_base_path s3://openaq-data-archive/records/csv.gz
 
 if __name__ == "__main__":
     main()
