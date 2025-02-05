@@ -1,6 +1,6 @@
 secrets.json
 NOTES.md
-air_quality.db
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
